@@ -1,0 +1,104 @@
+{
+  "auth": {
+    "email_label": "Email Address",
+    "password_label": "Password",
+    "login_button": "Log In",
+    "email_required": "Email is required",
+    "password_required": "Password is required",
+    "login_failed": "Authentication failed",
+    "login_title": "Admin Login",
+    "user_not_found": "User not found",
+    "wrong_password": "Wrong password",
+    "missing_email": "Email address is required",
+    "logout_button": "Log Out" 
+  },
+  
+    "dashboard": {
+      "title": "Dashboard",
+      "students": "Students",
+      "parents": "Parents",
+      "teachers": "Teachers",
+      "grades": "Grades",
+      "reports": "Reports",
+      "classes": "Classes",
+      "courses": "Courses",
+      "schedule": "Timetable",
+      "calendar": "Calendar",
+      "messages": "Messages",
+      "settings": "Settings",
+      "stats_placeholder": "Statistics coming soon..."
+    },
+  
+  
+  "student_management": {
+    "title": "Student Management",
+    "content": "This is the student management page.",
+    "name": "Name",
+    "email": "Email",
+    "add": "Add",
+    "name_required": "Student name is required",
+    "email_invalid": "Invalid email address"
+  },
+
+  "SchoolFee" : 
+    {
+      "grid_name": "Grid Name",
+      "number_of_installments": "Number of Installments",
+      "amount": "Amount",
+      "due_date": "Due Date",
+      "validate": "Validate",
+      "validation_error_installments": "Please fill in the grid name and all installment details correctly.",
+      "validated_installments": "Installment Grids Pending Save",
+      "installment": "Installment",
+      "save_all": "Save All Definitions",
+      "installments_saved_success": "All installment definitions have been saved.",
+      "school_fee": "School Fee"
+    },
+    
+    
+  "levels": {
+    "6e": "Form 1",
+    "5e": "Form 2",
+    "4e": "Form 3",
+    "3e": "Form 4",
+    "2nde": "Form 5",
+    "1ère": "Lower Sixth",
+    "Tle": "Upper Sixth"
+  },
+  "cycles": {
+    "premier_cycle": "First Cycle",
+    "second_cycle": "Second Cycle"
+  },
+  "sections": {
+    "A": "A",
+    "B": "B",
+    "C": "C",
+    "1": "1",
+    "2": "2",
+    "3": "3"
+  },
+  "class":{
+    "class_name_complement_optional": "Complementary Name (optional)",
+  "class_name_complement_hint": "Ex: German, Sports, ...",
+  "teacher_id_optional": "Head Teacher ID (optional)",
+  "select_level": "Select level",
+  "select_section": "Select section",
+  "select_cycle": "Select cycle",
+  "select_installment_grid": "Select an installment grid",
+  "add_class_title": "Add New Class",
+  "edit_class_title": "Edit Class",
+  "save_changes_button": "Save Changes",
+  "add_class_button": "Add Class",
+  "class_modified_success": "Class modified successfully!",
+  "class_added_success": "Class added successfully!",
+  "error_occurred": "Error:",
+  "loading_installment_grids": "Loading installment grids...",
+  "no_installment_grid_available": "No installment grid available.",
+  "please_select_level": "Please select a level",
+  "please_select_cycle": "Please select a cycle",
+  "please_select_installment_grid": "Please select an installment grid",
+  "students_count": "{count} students",
+  "add_class": "Add class",
+  "grid_name_and_amount": "{name} ({amount} FCFA)"
+  }
+}

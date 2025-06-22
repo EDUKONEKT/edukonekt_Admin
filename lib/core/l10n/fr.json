@@ -1,0 +1,105 @@
+{
+  "auth": {
+    "email_label": "Adresse Email",
+    "password_label": "Mot de passe",
+    "login_button": "Se Connecter",
+    "email_required": "L'email est requis",
+    "password_required": "Le mot de passe est requis",
+    "login_failed": "Échec de l'authentification",
+    "login_title": "Connexion Admin",
+    "user_not_found": "Utilisateur non trouvé",
+    "wrong_password": "Mot de passe incorrect",
+    "missing_email": "L'adresse email est requise",
+    "logout_button": "Se Déconnecter" 
+  },
+
+  
+  
+    "student_management": {
+      "title": "Gestion des Étudiants",
+      "content": "Ceci est la page de gestion des étudiants.",
+      "name": "Nom",
+      "email": "Email",
+      "add": "Ajouter",
+      "name_required": "Le nom de l'étudiant est requis",
+      "email_invalid": "Adresse email invalide"
+    },
+    
+      "dashboard": {
+        "title": "Tableau de bord",
+        "students": "Élèves",
+        "parents": "Parents",
+        "teachers": "Enseignants",
+        "grades": "Notes",
+        "reports": "Bulletins",
+        "classes": "Classes",
+        "courses": "Cours",
+        "schedule": "Emploi du temps",
+        "calendar": "Calendrier",
+        "messages": "Messageries",
+        "settings": "Paramètres",
+        "stats_placeholder": "Statistiques à venir..."
+      },
+
+      "SchoolFee" : {
+        "grid_name": "Nom de la Grille",
+        "number_of_installments": "Nombre de Versements",
+        "amount": "Montant",
+        "due_date": "Date d'échéance",
+        "validate": "Valider",
+        "validation_error_installments": "Veuillez remplir correctement le nom de la grille et tous les détails des versements.",
+        "validated_installments": "All ",
+        "installment": "Tranche",
+        "save_all": "Enregistrer Toutes les Définitions",
+        "installments_saved_success": "Toutes les définitions de versements ont été enregistrées.",
+        "school_fee": "Scolarité"
+        
+      },
+    
+  "levels": {
+    "6e": "6e",
+    "5e": "5e",
+    "4e": "4e",
+    "3e": "3e",
+    "2nde": "2nde",
+    "1ère": "1ère",
+    "Tle": "Tle"
+  },
+  "cycles": {
+    "premier_cycle": "Premier Cycle",
+    "second_cycle": "Second Cycle"
+  },
+  "sections": {
+    "A": "A",
+    "B": "B",
+    "C": "C",
+    "1": "1",
+    "2": "2",
+    "3": "3"
+  },
+  "class":{
+    "class_name_complement_optional": "Complément de nom (facultatif)",
+  "class_name_complement_hint": "Ex: Allemand, Sport, ...",
+  "teacher_id_optional": "ID Professeur Principal (facultatif)",
+  "select_level": "Sélectionnez le niveau",
+  "select_section": "Sélectionnez la section",
+  "select_cycle": "Sélectionnez le cycle",
+  "select_installment_grid": "Sélectionnez une grille de versement",
+  "add_class_title": "Ajouter une Nouvelle Classe",
+  "edit_class_title": "Modifier la Classe",
+  "save_changes_button": "Enregistrer les modifications",
+  "add_class_button": "Ajouter la Classe",
+  "class_modified_success": "Classe modifiée avec succès!",
+  "class_added_success": "Classe ajoutée avec succès!",
+  "error_occurred": "Erreur:",
+  "loading_installment_grids": "Chargement des grilles de versement...",
+  "no_installment_grid_available": "Aucune grille de versement disponible.",
+  "please_select_level": "Veuillez sélectionner un niveau",
+  "please_select_cycle": "Veuillez sélectionner un cycle",
+  "please_select_installment_grid": "Veuillez sélectionner une grille de versement",
+  "students_count": "{count} élèves",
+  "add_class": "Ajouter une classe",
+  "grid_name_and_amount": "{name} ({amount} FCFA)"
+  }
+}
+    
