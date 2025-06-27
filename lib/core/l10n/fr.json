@@ -38,7 +38,8 @@
         "calendar": "Calendrier",
         "messages": "Messageries",
         "settings": "Paramètres",
-        "stats_placeholder": "Statistiques à venir..."
+        "stats_placeholder": "Statistiques à venir...",
+        "subjects": "Matières"
       },
 
       "SchoolFee" : {
@@ -65,10 +66,10 @@
     "1ère": "1ère",
     "Tle": "Tle"
   },
-  "cycles": {
+ 
     "premier_cycle": "Premier Cycle",
-    "second_cycle": "Second Cycle"
-  },
+    "second_cycle": "Second Cycle",
+  
   "sections": {
     "A": "A",
     "B": "B",
@@ -77,8 +78,8 @@
     "2": "2",
     "3": "3"
   },
-  "class":{
-    "class_name_complement_optional": "Complément de nom (facultatif)",
+  
+  "class_name_complement_optional": "Complément de nom (facultatif)",
   "class_name_complement_hint": "Ex: Allemand, Sport, ...",
   "teacher_id_optional": "ID Professeur Principal (facultatif)",
   "select_level": "Sélectionnez le niveau",
@@ -99,7 +100,79 @@
   "please_select_installment_grid": "Veuillez sélectionner une grille de versement",
   "students_count": "{count} élèves",
   "add_class": "Ajouter une classe",
-  "grid_name_and_amount": "{name} ({amount} FCFA)"
-  }
+  "grid_name_and_amount": "{name} ({amount} FCFA)",
+  "Confirm deletion": "Confirmer la suppression",
+  "Cancel" : "Annuler",
+  "Delete": "Supprimer",
+  "Total Classes":"Total Classes",
+  "Total Students":"Total Élèves",
+  "edit":"Modifier",
+  "Search for a class": "Rechercher une classe",
+  "ex:form 1 A": "Ex: 6e A",
+  "By Cycle":"Par Cycle",
+  "All":"Tous",
+  "By Level": "Par Niveau",
+  
+
+  
+  "students": "Élèves",
+  "search": "Rechercher",
+  "add_student": "Nouvel élève",
+  "total": "Total",
+  "girls": "Filles",
+  "boys": "Garçons",
+  "filter_cycle": "Cycle",
+  "filter_all": "Tous",
+  "filter_cycle1": "1er cycle",
+  "filter_cycle2": "2e cycle",
+  "filter_class": "Classe",
+  "Filters": "Filtres",
+
+  "student_info": "Informations Élève",
+  "full_name": "Nom complet",
+  "gender_boy": "Garçon",
+  "gender_girl": "Fille",
+  "birth_date": "Date de naissance",
+  "specificities": "Spécificités",
+  "parents_tutors": "Parents / Tuteurs",
+  "father": "Père",
+  "mother": "Mère",
+  "tutor": "Tuteur",
+  "phone": "Téléphone",
+  "address": "Adresse",
+  "account": "Compte",
+  "required": "Requis",
+  "required_for_selected_parent": "Requis pour le parent sélectionné",
+  "submit": "Enregistrer",
+  "parent_account_created": "Compte parent créé",
+  "parent_account_email": "Email",
+  "parent_account_password": "Mot de passe",
+  "ok": "OK",
+  "error": "Erreur",
+  "Student joined to an existing parent" : "Élève lié à un parent existant",
+  "New Student": "Nouvel Élève",
+  "dd/MM/yyyy": "jj/MM/aaaa",
+
+
+  "subject":{
+  "subject": "Matière",
+  "subjects": "Matières",
+  "subject_detail": "Détails de la matière",
+  "code": "Code",
+  "description": "Description",
+  "add_subject": "Ajouter une matière",
+  "edit_subject": "Modifier la matière",
+  "delete_subject": "Supprimer la matière",
+  "confirm_delete_subject": "Voulez-vous vraiment supprimer cette matière ?",
+  "name": "Nom",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "other": "Autre",
+  "select_subject_name": "Sélectionnez un nom de matière",
+  "last_updated": "Dernière mise à jour"
+}
+
+
+
 }
     

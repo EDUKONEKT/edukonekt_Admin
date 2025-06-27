@@ -136,7 +136,9 @@ class StudentService {
         passwordTemporaire: true,
         isSynced: false,
         createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        updatedAt: DateTime.now(), 
+        requiresAccount:false,
+         temporaryPassword: '',
       );
       await userService.addUserToFirestore(appUser);
 

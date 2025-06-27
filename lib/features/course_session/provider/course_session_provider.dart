@@ -1,189 +1,138 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+
 import '../../../core/models/course_session_model.dart';
-import '../service/course_session_service.dart'; // Ensure the path is correct
+import '../service/course_session_service.dart';
 
 class CourseSessionProvider extends ChangeNotifier {
-  final CourseSessionService _courseSessionService = CourseSessionService();
+  late CourseSessionService _service;
+  final Logger _log = Logger();
 
-  List<CourseSession> _courseSessions = [];
-  List<CourseSession> get courseSessions => _courseSessions;
-
-  CourseSession? _courseSession;
-  CourseSession? get courseSession => _courseSession;
-
-  String _errorMessage = '';
-  String get errorMessage => _errorMessage;
-
+  final List<CourseSession> _sessions = [];
   bool _isLoading = false;
+  String? _error;
+  bool _ready = false;
+  StreamSubscription? _sub;
+
+  List<CourseSession> get sessions => List.unmodifiable(_sessions);
   bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get ready => _ready;
 
-  // Retrieves all course sessions
-  Future<void> fetchCourseSessions() async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
+  // ---------- INIT ----------
+  Future<void> init(String schoolId) async {
+    _service = CourseSessionService(schoolId: schoolId);
+    await _getOnce();
+    _listenToSessions();
+  }
+
+  Future<void> _getOnce() async {
     try {
-      _courseSessions = await _courseSessionService.getAllCourseSessions();
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSessions = [];
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final data = await _service.getAll();
+      _sessions
+        ..clear()
+        ..addAll(data);
+
+      _ready = true;
+    } catch (e, stack) {
+      _error = e.toString();
+      _log.e('CourseSessionProvider init error', error: e, stackTrace: stack);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Retrieves a course session by its Firestore ID
-  Future<void> getCourseSessionById(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _courseSession = await _courseSessionService.getCourseSessionById(id);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSession = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+  void _listenToSessions() {
+    _sub?.cancel();
+    _sub = _service.ref.snapshots().listen(
+      (snapshot) {
+        _sessions
+          ..clear()
+          ..addAll(snapshot.docs.map((doc) => CourseSession.fromFirestore(
+              doc.data() as Map<String, dynamic>, doc.id)));
 
-  // Retrieves course sessions for a specific class
-  Future<void> fetchCourseSessionsByClass(String classId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _courseSessions = await _courseSessionService.getCourseSessionsByClass(classId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSessions = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves course sessions for a specific teacher
-  Future<void> fetchCourseSessionsByTeacher(String teacherId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _courseSessions = await _courseSessionService.getCourseSessionsByTeacher(teacherId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSessions = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves course sessions for a specific subject
-  Future<void> fetchCourseSessionsBySubject(String subjectId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _courseSessions = await _courseSessionService.getCourseSessionsBySubject(subjectId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSessions = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves course sessions for a specific day of the week
-  Future<void> fetchCourseSessionsByDayOfWeek(int dayOfWeek) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _courseSessions = await _courseSessionService.getCourseSessionsByDayOfWeek(dayOfWeek);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSessions = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves course sessions for a specific academic year
-  Future<void> fetchCourseSessionsByAcademicYear(String academicYear) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _courseSessions = await _courseSessionService.getCourseSessionsByAcademicYear(academicYear);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _courseSessions = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Adds a new course session
-  Future<CourseSession?> addCourseSession(CourseSession session) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      final newCourseSession = await _courseSessionService.addCourseSession(session);
-      if (newCourseSession != null) {
-        _courseSessions.add(newCourseSession);
+        _error = null;
         notifyListeners();
-      }
-      return newCourseSession;
-    } catch (e) {
-      _errorMessage = e.toString();
-      return null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      },
+      onError: (e, stack) {
+        _error = e.toString();
+        _log.e('CourseSessionProvider stream error', error: e, stackTrace: stack);
+        notifyListeners();
+      },
+    );
+  }
+
+  // ---------- CRUD ----------
+  Future<void> addCourseSession(CourseSession session) async {
+    try {
+      await _service.addCourseSession(session);
+    } catch (e, stack) {
+      _log.e('Erreur addCourseSession', error: e, stackTrace: stack);
     }
   }
 
-  // Updates an existing course session
   Future<void> updateCourseSession(CourseSession session) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
     try {
-      await _courseSessionService.updateCourseSession(session);
-      final index = _courseSessions.indexWhere((s) => s.id == session.id);
-      if (index != -1) {
-        _courseSessions[index] = session;
-        notifyListeners();
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      await _service.updateCourseSession(session);
+    } catch (e, stack) {
+      _log.e('Erreur updateCourseSession', error: e, stackTrace: stack);
     }
   }
 
-  // Deletes a course session
   Future<void> deleteCourseSession(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
     try {
-      await _courseSessionService.deleteCourseSession(id);
-      _courseSessions.removeWhere((s) => s.id == id);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      await _service.deleteCourseSession(id);
+    } catch (e, stack) {
+      _log.e('Erreur deleteCourseSession', error: e, stackTrace: stack);
     }
+  }
+
+  Future<void> syncPendingSessions() async {
+    final unsynced = _sessions.where((s) => !s.isSynced).toList();
+    if (unsynced.isNotEmpty) {
+      await _service.sync(unsynced);
+    }
+  }
+
+  // ---------- FILTERS ----------
+  List<CourseSession> getByClass(String classId) {
+    return _sessions.where((s) => s.classId == classId).toList();
+  }
+  List<CourseSession> getByClassAndDay(String classId, int dayOfWeek) {
+  return _sessions.where((s) => s.classId == classId && s.dayOfWeek == dayOfWeek).toList();
+}
+
+
+  List<CourseSession> getByTeacher(String teacherId) {
+    return _sessions.where((s) => s.teacherId == teacherId).toList();
+  }
+
+  List<CourseSession> getByDay(int dayOfWeek) {
+    return _sessions.where((s) => s.dayOfWeek == dayOfWeek).toList();
+  }
+
+  List<CourseSession> getByAcademicYear(String year) {
+    return _sessions.where((s) => s.academicYear == year).toList();
+  }
+
+  CourseSession? getById(String id) {
+    try {
+      return _sessions.firstWhere((s) => s.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ---------- CLEANUP ----------
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 }

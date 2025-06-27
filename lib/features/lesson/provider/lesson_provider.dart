@@ -1,175 +1,109 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 import '../../../core/models/lesson_model.dart';
 import '../service/lesson_service.dart';
 
-
 class LessonProvider extends ChangeNotifier {
-  final LessonService _lessonService = LessonService();
+  late LessonService _service;
+  final Logger _log = Logger();
 
-  List<Lesson> _lessons = [];
-  List<Lesson> get lessons => _lessons;
-
-  Lesson? _lesson;
-  Lesson? get lesson => _lesson;
-
-  String _errorMessage = '';
-  String get errorMessage => _errorMessage;
-
+  final List<Lesson> _lessons = [];
   bool _isLoading = false;
+  String? _error;
+  bool _ready = false;
+  StreamSubscription? _sub;
+
+  List<Lesson> get lessons => List.unmodifiable(_lessons);
   bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get ready => _ready;
 
-  // Retrieves all lessons
-  Future<void> fetchLessons() async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
+  // ---------- INIT ----------
+  Future<void> init(String schoolId) async {
+    _service = LessonService(schoolId: schoolId);
+    await _getOnce();
+    _listenToLessons();
+  }
+
+  Future<void> _getOnce() async {
     try {
-      _lessons = await _lessonService.getAllLessons();
-    } catch (e) {
-      _errorMessage = e.toString();
-      _lessons = [];
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final data = await _service.getAll();
+      _lessons
+        ..clear()
+        ..addAll(data);
+
+      _ready = true;
+    } catch (e, stack) {
+      _error = e.toString();
+      _log.e('LessonProvider init error', error: e, stackTrace: stack);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Retrieves a lesson by its Firestore ID
-  Future<void> getLessonById(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _lesson = await _lessonService.getLessonById(id);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _lesson = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+  void _listenToLessons() {
+    _sub?.cancel();
+    _sub = _service.ref.snapshots().listen(
+      (snapshot) {
+        _lessons
+          ..clear()
+          ..addAll(snapshot.docs.map((doc) => Lesson.fromFirestore(
+              doc.data() as Map<String, dynamic>, doc.id)));
 
-  // Retrieves lessons by subjectId
-  Future<void> fetchLessonsBySubject(String subjectId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _lessons = await _lessonService.getLessonsBySubject(subjectId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _lessons = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves lessons by classId
-  Future<void> fetchLessonsByClass(String classId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _lessons = await _lessonService.getLessonsByClass(classId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _lessons = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves lessons by teacherId
-  Future<void> fetchLessonsByTeacher(String teacherId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _lessons = await _lessonService.getLessonsByTeacher(teacherId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _lessons = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Retrieves lessons by date
-  Future<void> fetchLessonsByDate(DateTime date) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _lessons = await _lessonService.getLessonsByDate(date);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _lessons = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Adds a new lesson
-  Future<Lesson?> addLesson(Lesson lesson) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      final newLesson = await _lessonService.addLesson(lesson);
-      if (newLesson != null) {
-        _lessons.add(newLesson);
+        _error = null;
         notifyListeners();
-      }
-      return newLesson;
-    } catch (e) {
-      _errorMessage = e.toString();
-      return null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      },
+      onError: (e, stack) {
+        _error = e.toString();
+        _log.e('LessonProvider stream error', error: e, stackTrace: stack);
+        notifyListeners();
+      },
+    );
+  }
+
+  // ---------- CRUD ----------
+  Future<void> addLesson(Lesson lesson) async {
+    try {
+      await _service.addLesson(lesson);
+    } catch (e, stack) {
+      _log.e('Erreur addLesson', error: e, stackTrace: stack);
     }
   }
 
-  // Updates an existing lesson
   Future<void> updateLesson(Lesson lesson) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
     try {
-      await _lessonService.updateLesson(lesson);
-      final index = _lessons.indexWhere((l) => l.id == lesson.id);
-      if (index != -1) {
-        _lessons[index] = lesson;
-        notifyListeners();
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      await _service.updateLesson(lesson);
+    } catch (e, stack) {
+      _log.e('Erreur updateLesson', error: e, stackTrace: stack);
     }
   }
 
-  // Deletes a lesson
   Future<void> deleteLesson(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
     try {
-      await _lessonService.deleteLesson(id);
-      _lessons.removeWhere((l) => l.id == id);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      await _service.deleteLesson(id);
+    } catch (e, stack) {
+      _log.e('Erreur deleteLesson', error: e, stackTrace: stack);
     }
+  }
+
+  Future<void> syncPendingLessons() async {
+    final unsynced = _lessons.where((e) => !e.isSynced).toList();
+    if (unsynced.isNotEmpty) {
+      await _service.sync(unsynced);
+    }
+  }
+
+  // ---------- CLEANUP ----------
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 }

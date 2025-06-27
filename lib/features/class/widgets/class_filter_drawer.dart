@@ -1,5 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+/// --------------------------------------------------
+/// 1. Drawer latéral de filtres pour les classes
+/// --------------------------------------------------
 class ClassFilterDrawer extends StatelessWidget {
   final String? selectedCycle;
   final String? selectedLevel;
@@ -20,27 +24,32 @@ class ClassFilterDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      width: 250, // Larghezza fissa per i filtri laterali
-      color: Theme.of(context).cardColor, // Colore di sfondo dei filtri
+      width: 250,
+      color: theme.cardColor,
       child: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Campo di ricerca
+          // 🔍  Recherche
           Padding(
             padding: const EdgeInsets.only(bottom: 24.0),
             child: TextField(
               controller: TextEditingController(text: searchQuery),
+              style: theme.textTheme.bodyMedium,
               decoration: InputDecoration(
-                labelText: 'Rechercher une classe',
-                hintText: 'Ex: 6e A',
+                labelText: 'Search for a class'.tr(),
+                hintText: 'ex:form 1 A'.tr(),
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide.none, // Nessun bordo diretto
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade200,
+                fillColor: theme.inputDecorationTheme.fillColor ??
+                    colorScheme.surfaceVariant.withOpacity(0.3),
               ),
               onChanged: onSearchChanged,
             ),
@@ -48,65 +57,54 @@ class ClassFilterDrawer extends StatelessWidget {
           const Divider(height: 1, thickness: 1),
           const SizedBox(height: 24.0),
 
-          // Filtri per ciclo
+          // 🏫  Cycle
           Text(
-            'Par Cycle',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            'By Cycle'.tr(),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
           ),
-          RadioListTile<String>(
-            title: const Text('Tous'),
-            value: '',
-            groupValue: selectedCycle,
-            onChanged: onCycleChanged,
-            activeColor: Theme.of(context).colorScheme.secondary,
-          ),
-          RadioListTile<String>(
-            title: const Text('Premier Cycle'),
-            value: 'premier_cycle',
-            groupValue: selectedCycle,
-            onChanged: onCycleChanged,
-            activeColor: Theme.of(context).colorScheme.secondary,
-          ),
-          RadioListTile<String>(
-            title: const Text('Second Cycle'),
-            value: 'second_cycle', // Puoi usare "cycle2" o un valore più specifico
-            groupValue: selectedCycle,
-            onChanged: onCycleChanged,
-            activeColor: Theme.of(context).colorScheme.secondary,
-          ),
+          _radioTile(context, '', 'All'.tr(), selectedCycle, onCycleChanged),
+          _radioTile(context, 'premier_cycle', 'premier_cycle'.tr(), selectedCycle, onCycleChanged),
+          _radioTile(context, 'second_cycle', 'second_cycle'.tr(), selectedCycle, onCycleChanged),
+
           const SizedBox(height: 24.0),
           const Divider(height: 1, thickness: 1),
           const SizedBox(height: 24.0),
 
-          // Filtri per livello
+          // 🎚️  Niveau
           Text(
-            'Par Niveau',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            'By Level'.tr(),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
           ),
-          RadioListTile<String>(
-            title: const Text('Tous'),
-            value: '',
-            groupValue: selectedLevel,
-            onChanged: onLevelChanged,
-            activeColor: Theme.of(context).colorScheme.secondary,
-          ),
-          // Esempio di alcuni livelli, puoi estenderli
-          ...['6e', '5e', '4e', '3e', '2nde', '1ère', 'Tle'].map((level) =>
-              RadioListTile<String>(
-                title: Text(level),
-                value: level,
-                groupValue: selectedLevel,
-                onChanged: onLevelChanged,
-                activeColor: Theme.of(context).colorScheme.secondary,
-              )),
+          _radioTile(context, '', 'All'.tr(), selectedLevel, onLevelChanged),
+          ...['6e', '5e', '4e', '3e', '2nde', '1ère', 'Tle']
+              .map((level) => _radioTile(context, level.tr(), level.tr(), selectedLevel, onLevelChanged)),
         ],
       ),
+    );
+  }
+
+  Widget _radioTile(
+    BuildContext context,
+    String value,
+    String label,
+    String? group,
+    ValueChanged<String?> onChanged,
+  ) {
+    final theme = Theme.of(context);
+    return RadioListTile<String>(
+      title: Text(label),
+      value: value,
+      groupValue: group,
+      onChanged: onChanged,
+      activeColor: theme.colorScheme.secondary,
+      dense: true,
+      contentPadding: EdgeInsets.zero,
     );
   }
 }

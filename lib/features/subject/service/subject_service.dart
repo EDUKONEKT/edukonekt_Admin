@@ -1,68 +1,93 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:logger/logger.dart';
 import '../../../core/models/subject_model.dart';
 
-
 class SubjectService {
+  final Logger _log = Logger();
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final String _collection = 'subjects';
 
-  // Ajoute une nouvelle matière à Firestore
-  Future<Subject?> addSubject(Subject subject) async {
+  CollectionReference<Map<String, dynamic>> _col(String schoolId) =>
+      _db.collection('schools').doc(schoolId).collection('subjects');
+
+  CollectionReference<Map<String, dynamic>> ref(String schoolId) => _col(schoolId);
+
+  Stream<List<Subject>> watchSubjects(String schoolId) {
+    return _col(schoolId).snapshots(includeMetadataChanges: true).map(
+      (snap) => snap.docs.map((doc) {
+        final subject = Subject.fromFirestore(doc.data(), doc.id);
+        return subject.copyWith(isSynced: !doc.metadata.hasPendingWrites);
+      }).toList(),
+    );
+  }
+
+  Future<List<Subject>> getSubjectsOnce(String schoolId) async {
     try {
-      final docRef = await _db.collection(_collection).add(subject.toFirestore());
-      final docSnapshot = await docRef.get();
-      return docSnapshot.exists ? Subject.fromFirestore(docSnapshot.data() as Map<String, dynamic>, docSnapshot.id) : null;
-    } on FirebaseException catch (e) {
-      throw Exception('Erreur Firebase lors de l\'ajout de la matière : ${e.message}');
-    } catch (e) {
-      throw Exception('Erreur inattendue lors de l\'ajout de la matière : $e');
+      final snap = await _col(schoolId).get(); // 🔄 pas de Source.cache forcé
+      return snap.docs.map((doc) => Subject.fromFirestore(doc.data(), doc.id)).toList();
+    } catch (e, s) {
+      _log.e('getSubjectsOnce error', error: e, stackTrace: s);
+      return [];
     }
   }
 
-  // Récupère une matière par son ID Firestore
-  Future<Subject?> getSubjectById(String id) async {
+  Future<void> addSubject(String schoolId, Subject s) async {
     try {
-      final docSnapshot = await _db.collection(_collection).doc(id).get();
-      return docSnapshot.exists ? Subject.fromFirestore(docSnapshot.data() as Map<String, dynamic>, docSnapshot.id) : null;
-    } on FirebaseException catch (e) {
-      throw Exception('Erreur Firebase lors de la récupération de la matière par ID : ${e.message}');
-    } catch (e) {
-      throw Exception('Erreur inattendue lors de la récupération de la matière par ID : $e');
+      _log.i('addSubject: ${s.name} (${s.id})');
+      await _col(schoolId).doc(s.id).set({
+        ...s.toFirestore(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e, s) {
+      _log.e('addSubject error', error: e, stackTrace: s);
+      rethrow;
     }
   }
 
-  // Récupère toutes les matières
-  Future<List<Subject>> getAllSubjects() async {
+  Future<void> updateSubject(String schoolId, Subject s) async {
     try {
-      final querySnapshot = await _db.collection(_collection).get();
-      return querySnapshot.docs.map((doc) => Subject.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Erreur Firebase lors de la récupération de toutes les matières : ${e.message}');
-    } catch (e) {
-      throw Exception('Erreur inattendue lors de la récupération de toutes les matières : $e');
+      _log.i('updateSubject: ${s.name} (${s.id})');
+      await _col(schoolId).doc(s.id).update({
+        ...s.toFirestore(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e, s) {
+      _log.e('updateSubject error', error: e, stackTrace: s);
+      rethrow;
     }
   }
 
-  // Met à jour une matière existante
-  Future<void> updateSubject(Subject subject) async {
+  Future<void> deleteSubject(String schoolId, String id) async {
     try {
-      await _db.collection(_collection).doc(subject.id).update(subject.toFirestore());
-    } on FirebaseException catch (e) {
-      throw Exception('Erreur Firebase lors de la mise à jour de la matière : ${e.message}');
-    } catch (e) {
-      throw Exception('Erreur inattendue lors de la mise à jour de la matière : $e');
+      _log.i('deleteSubject: $id');
+      await _col(schoolId).doc(id).delete();
+    } catch (e, s) {
+      _log.e('deleteSubject error', error: e, stackTrace: s);
+      rethrow;
     }
   }
 
-  // Supprime une matière par son ID
-  Future<void> deleteSubject(String id) async {
+  Subject? getByName(List<Subject> list, String name) {
     try {
-      await _db.collection(_collection).doc(id).delete();
-    } on FirebaseException catch (e) {
-      throw Exception('Erreur Firebase lors de la suppression de la matière : ${e.message}');
-    } catch (e) {
-      throw Exception('Erreur inattendue lors de la suppression de la matière : $e');
+      return list.firstWhere((s) => s.name.toLowerCase() == name.toLowerCase());
+    } catch (_) {
+      return null;
     }
+  }
+
+  Subject? getByCode(List<Subject> list, String code) {
+    try {
+      return list.firstWhere((s) => s.code.toLowerCase() == code.toLowerCase());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<Subject> filterByKeyword(List<Subject> list, String keyword) {
+    final lower = keyword.toLowerCase();
+    return list.where((s) =>
+      s.name.toLowerCase().contains(lower) ||
+      s.code.toLowerCase().contains(lower) ||
+      s.description.toLowerCase().contains(lower)).toList();
   }
 }

@@ -1,141 +1,122 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../core/models/course_session_model.dart'; // Ensure the path is correct
+import '../../../core/models/course_session_model.dart';
 
 class CourseSessionService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final String _collection = 'course_sessions';
+  final String schoolId;
+  late final CollectionReference _collection;
 
-  // Adds a new course session to Firestore
-  Future<CourseSession?> addCourseSession(CourseSession session) async {
-    try {
-      final docRef = await _db.collection(_collection).add(session.toFirestore());
-      final docSnapshot = await docRef.get();
-      return docSnapshot.exists ? CourseSession.fromFirestore(docSnapshot.data() as Map<String, dynamic>, docSnapshot.id) : null;
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error adding course session: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error adding course session: $e');
-    }
+  CourseSessionService({required this.schoolId}) {
+    _collection = FirebaseFirestore.instance
+        .collection('schools')
+        .doc(schoolId)
+        .collection('course_sessions');
   }
 
-  // Retrieves a course session by its Firestore ID
-  Future<CourseSession?> getCourseSessionById(String id) async {
-    try {
-      final docSnapshot = await _db.collection(_collection).doc(id).get();
-      return docSnapshot.exists ? CourseSession.fromFirestore(docSnapshot.data() as Map<String, dynamic>, docSnapshot.id) : null;
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting course session by ID: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting course session by ID: $e');
-    }
+  CollectionReference get ref => _collection;
+
+  Future<void> addCourseSession(CourseSession session) async {
+    await _collection.doc(session.id).set(
+      session.toFirestore(),
+      SetOptions(merge: true),
+    );
   }
 
-  // Retrieves all course sessions
-  Future<List<CourseSession>> getAllCourseSessions() async {
-    try {
-      final querySnapshot = await _db.collection(_collection).get();
-      return querySnapshot.docs.map((doc) => CourseSession.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting all course sessions: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting all course sessions: $e');
-    }
-  }
-
-  // Retrieves course sessions for a specific class
-  Future<List<CourseSession>> getCourseSessionsByClass(String classId) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('classId', isEqualTo: classId)
-          .get();
-      return querySnapshot.docs.map((doc) => CourseSession.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting course sessions by class: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting course sessions by class: $e');
-    }
-  }
-
-  // Retrieves course sessions for a specific teacher
-  Future<List<CourseSession>> getCourseSessionsByTeacher(String teacherId) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('teacherId', isEqualTo: teacherId)
-          .get();
-      return querySnapshot.docs.map((doc) => CourseSession.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting course sessions by teacher: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting course sessions by teacher: $e');
-    }
-  }
-
-  // Retrieves course sessions for a specific subject
-  Future<List<CourseSession>> getCourseSessionsBySubject(String subjectId) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('subjectId', isEqualTo: subjectId)
-          .get();
-      return querySnapshot.docs.map((doc) => CourseSession.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting course sessions by subject: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting course sessions by subject: $e');
-    }
-  }
-
-  // Retrieves course sessions for a specific day of the week
-  Future<List<CourseSession>> getCourseSessionsByDayOfWeek(int dayOfWeek) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('dayOfWeek', isEqualTo: dayOfWeek)
-          .get();
-      return querySnapshot.docs.map((doc) => CourseSession.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting course sessions by day of week: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting course sessions by day of week: $e');
-    }
-  }
-
-  // Retrieves course sessions for a specific academic year
-  Future<List<CourseSession>> getCourseSessionsByAcademicYear(String academicYear) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('academicYear', isEqualTo: academicYear)
-          .get();
-      return querySnapshot.docs.map((doc) => CourseSession.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting course sessions by academic year: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting course sessions by academic year: $e');
-    }
-  }
-
-  // Updates an existing course session
   Future<void> updateCourseSession(CourseSession session) async {
+    await _collection.doc(session.id).update(session.toFirestore());
+  }
+
+  Future<void> deleteCourseSession(String id) async {
+    await _collection.doc(id).delete();
+  }
+
+  Future<List<CourseSession>> getAll() async {
     try {
-      await _db.collection(_collection).doc(session.id).update(session.toFirestore());
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error updating course session: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error updating course session: $e');
+      final snapshot = await _collection.get();
+      return snapshot.docs
+          .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
     }
   }
 
-  // Deletes a course session by its ID
-  Future<void> deleteCourseSession(String id) async {
+  Future<CourseSession?> getById(String id) async {
     try {
-      await _db.collection(_collection).doc(id).delete();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error deleting course session: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error deleting course session: $e');
+      final doc = await _collection.doc(id).get();
+      if (!doc.exists) return null;
+      return CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    } catch (_) {
+      return null;
     }
+  }
+
+  Stream<List<CourseSession>> watch() {
+    return _collection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList(),
+    );
+  }
+
+  Future<void> sync(List<CourseSession> unsynced) async {
+    for (final session in unsynced) {
+      await _collection.doc(session.id).set(
+        session.copyWith(isSynced: true).toFirestore(),
+        SetOptions(merge: true),
+      );
+    }
+  }
+
+  Future<List<CourseSession>> getByClass(String classId) async {
+    try {
+      final snapshot = await _collection.where('classId', isEqualTo: classId).get();
+      return snapshot.docs
+          .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<CourseSession>> getByTeacher(String teacherId) async {
+    try {
+      final snapshot = await _collection.where('teacherId', isEqualTo: teacherId).get();
+      return snapshot.docs
+          .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<CourseSession>> getByDay(int dayOfWeek) async {
+    try {
+      final snapshot = await _collection.where('dayOfWeek', isEqualTo: dayOfWeek).get();
+      return snapshot.docs
+          .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<CourseSession>> getByAcademicYear(String academicYear) async {
+    try {
+      final snapshot = await _collection.where('academicYear', isEqualTo: academicYear).get();
+      return snapshot.docs
+          .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Stream<List<CourseSession>> watchByClass(String classId) {
+    return _collection
+        .where('classId', isEqualTo: classId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => CourseSession.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+            .toList());
   }
 }

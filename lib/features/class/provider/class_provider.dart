@@ -91,6 +91,15 @@ class ClassProvider with ChangeNotifier {
     }
   }
 
+  Class? getById(String id) {
+  try {
+    return _classes.firstWhere((c) => c.id == id);
+  } catch (_) {
+    return null;
+  }
+}
+
+
   Future<void> delete(String id) async {
     try {
       await _service.delete(id);

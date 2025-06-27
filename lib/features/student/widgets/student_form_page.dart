@@ -1,16 +1,19 @@
-// ignore_for_file: use_build_context_synchronously
 
-import 'dart:math';
-
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
-import 'package:edukonekt_admin/core/models/student_model.dart';
-import 'package:edukonekt_admin/core/models/parent_model.dart';
+
+// === CORE MODELS ===
+import '../../../core/models/student_model.dart';
+import '../../../core/models/parent_model.dart';
+
+// === PROVIDERS ===
 import '../../class/provider/class_provider.dart';
 import '../../student/provider/student_provider.dart';
 import '../../parent/provider/parent_provider.dart';
+
 
 class StudentFormPage extends StatefulWidget {
   final String schoolId;
@@ -66,19 +69,18 @@ class _StudentFormPageState extends State<StudentFormPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedClassId == null || _gender == null || _birthDate == null) return;
-    if (_selectedUserRole == null) return;
+    if (_selectedClassId == null || _gender == null || _birthDate == null || _selectedUserRole == null) return;
 
     setState(() => _loading = true);
-
     final id = const Uuid().v4();
+
     final student = Student(
       id: id,
       fullName: _nameCtrl.text.trim(),
       gender: _gender!,
       birthDate: _birthDate!,
       classId: _selectedClassId!,
-      schoolFeeId: '', // à remplir dynamiquement si besoin
+      schoolFeeId: '',
       specificities: _specCtrl.text.trim(),
       profilePictureUrl: '',
       parentId: '',
@@ -91,30 +93,25 @@ class _StudentFormPageState extends State<StudentFormPage> {
     final studentProvider = context.read<StudentProvider>();
 
     try {
-      // Extraire infos selon rôle sélectionné
       final parentFullName = {
-        'father': _fatherName.text,
-        'mother': _motherName.text,
-        'tutor': _tutorName.text,
+        'father'.tr(): _fatherName.text,
+        'mother'.tr(): _motherName.text,
+        'tutor'.tr(): _tutorName.text,
       }[_selectedUserRole]!.trim();
 
       final phone = {
-        'father': _fatherPhone.text,
-        'mother': _motherPhone.text,
-        'tutor': _tutorPhone.text,
+        'father'.tr(): _fatherPhone.text,
+        'mother'.tr(): _motherPhone.text,
+        'tutor'.tr(): _tutorPhone.text,
       }[_selectedUserRole]!.trim();
-
-    
 
       final existing = await parentProvider.findByPhone(phone);
       if (existing != null) {
         await studentProvider.addStudent(student.copyWith(parentId: existing.id));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Élève lié à un parent existant')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Student joined to an existing parent'.tr())));
       } else {
-        final email = generateEmailFromName(parentFullName);
-        final password = _generatePassword;
+        final email = _generateEmailFromName(parentFullName);
+        final password = _generatePassword();
 
         final parent = Parent(
           id: const Uuid().v4(),
@@ -135,7 +132,7 @@ class _StudentFormPageState extends State<StudentFormPage> {
 
         await studentProvider.createStudentWithParent(
           parentEmail: email,
-          plainPassword: password.toString(),
+          plainPassword: password,
           parentT: parent,
           studentTemplate: student,
         );
@@ -143,18 +140,16 @@ class _StudentFormPageState extends State<StudentFormPage> {
         await showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text("Compte parent créé"),
-            content: Text("Email: $email\nMot de passe: $password"),
-            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
+            title: Text('parent_account_created'.tr()),
+            content: Text('Email: $email\nMot de passe: $password'),
+            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
           ),
         );
       }
 
       Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur: $e")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'error'.tr()}: $e')));
     } finally {
       setState(() => _loading = false);
     }
@@ -162,170 +157,206 @@ class _StudentFormPageState extends State<StudentFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final classProvider = context.watch<ClassProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Nouvel élève")),
+      appBar: AppBar(
+        title: Text('New Student'.tr()),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Informations Élève", style: TextStyle(fontSize: 18)),
-                          TextFormField(
-                            controller: _nameCtrl,
-                            decoration: const InputDecoration(labelText: "Nom complet"),
-                            validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  title: const Text("Garçon"),
-                                  value: "M",
-                                  groupValue: _gender,
-                                  onChanged: (v) => setState(() => _gender = v),
-                                ),
-                              ),
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  title: const Text("Fille"),
-                                  value: "F",
-                                  groupValue: _gender,
-                                  onChanged: (v) => setState(() => _gender = v),
-                                ),
-                              ),
-                            ],
-                          ),
-                          TextFormField(
-                            controller: _dobCtrl,
-                            decoration: const InputDecoration(labelText: "Date de naissance"),
-                            readOnly: true,
-                            onTap: () async {
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime(2010),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime.now(),
-                              );
-                              if (date != null) {
-                                setState(() {
-                                  _birthDate = date;
-                                  _dobCtrl.text = DateFormat('dd/MM/yyyy').format(date);
-                                });
-                              }
-                            },
-                          ),
-                          DropdownButtonFormField<String>(
-                            value: _selectedClassId,
-                            items: classProvider.classes
-                                .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
-                                .toList(),
-                            onChanged: (v) => setState(() => _selectedClassId = v),
-                            decoration: const InputDecoration(labelText: "Classe"),
-                          ),
-                          TextFormField(
-                            controller: _specCtrl,
-                            decoration: const InputDecoration(labelText: "Spécificités"),
-                            maxLines: 2,
-                          ),
-                        ],
-                      ),
+                  _buildSectionTitle(context, '👦 ${'student_info'.tr()}'),
+                  _buildCard(context, children: [
+                    TextFormField(
+                      controller: _nameCtrl,
+                      decoration: InputDecoration(labelText: 'full_name'.tr()),
+                      validator: (v) => v == null || v.isEmpty ? 'required'.tr() : null,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Parents / Tuteurs", style: TextStyle(fontSize: 18)),
-                          _buildParentRow("Père", _fatherName, _fatherPhone, _fatherAddr, "father"),
-                          _buildParentRow("Mère", _motherName, _motherPhone, _motherAddr, "mother"),
-                          _buildParentRow("Tuteur", _tutorName, _tutorPhone, _tutorAddr, "tutor"),
-                        ],
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: Text('gender_boy'.tr()),
+                            value: 'M',
+                            groupValue: _gender,
+                            onChanged: (v) => setState(() => _gender = v),
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: Text('gender_girl'.tr()),
+                            value: 'F',
+                            groupValue: _gender,
+                            onChanged: (v) => setState(() => _gender = v),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                    TextFormField(
+                      controller: _dobCtrl,
+                      readOnly: true,
+                      decoration: InputDecoration(labelText: 'birth_date'.tr()),
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime(2010),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (date != null) {
+                          setState(() {
+                            _birthDate = date;
+                            _dobCtrl.text = DateFormat('dd/MM/yyyy').format(date);
+                          });
+                        }
+                      },
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: _selectedClassId,
+                      items: classProvider.classes
+                          .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _selectedClassId = v),
+                      decoration: InputDecoration(labelText: 'Class'.tr()),
+                    ),
+                    TextFormField(
+                      controller: _specCtrl,
+                      decoration: InputDecoration(labelText: 'specificities'.tr()),
+                      maxLines: 2,
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(context, '👨‍👩‍👧 ${'parents_tutors'.tr()}'),
+                  _buildParentRow(context, 'father'.tr(), Icons.man, _fatherName, _fatherPhone, _fatherAddr, 'father'),
+                  _buildParentRow(context, 'mother'.tr(), Icons.woman, _motherName, _motherPhone, _motherAddr, 'mother'),
+                  _buildParentRow(context, 'tutor'.tr(), Icons.shield, _tutorName, _tutorPhone, _tutorAddr, 'tutor'),
                 ],
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.check),
-        label: const Text("Enregistrer"),
+        icon: const Icon(Icons.save),
+        label: Text('submit'.tr()),
+        backgroundColor: colorScheme.secondary,
         onPressed: _submit,
       ),
     );
   }
 
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCard(BuildContext context, {required List<Widget> children}) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.only(bottom: 16),
+      color: theme.cardColor,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+      ),
+    );
+  }
+
   Widget _buildParentRow(
+    BuildContext context,
     String label,
+    IconData icon,
     TextEditingController nameCtrl,
     TextEditingController phoneCtrl,
     TextEditingController addrCtrl,
     String role,
   ) {
-    return Column(
-      children: [
-        const Divider(),
-        Row(
+    final theme = Theme.of(context);
+    final isSelected = _selectedUserRole == role;
+
+    return Card(
+      elevation: isSelected ? 4 : 1,
+      color: isSelected ? theme.colorScheme.secondary.withOpacity(0.1) : theme.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(label)),
-            Radio<String>(
-              value: role,
-              groupValue: _selectedUserRole,
-              onChanged: (v) => setState(() => _selectedUserRole = v),
+            Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Radio<String>(
+                  value: role,
+                  groupValue: _selectedUserRole,
+                  onChanged: (v) => setState(() => _selectedUserRole = v),
+                  activeColor: theme.colorScheme.secondary,
+                ),
+                const SizedBox(width: 4),
+                Text('account'.tr()),
+              ],
             ),
-            const Text("Compte"),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: nameCtrl,
+              decoration: InputDecoration(labelText: 'full_name'.tr()),
+            ),
+            TextFormField(
+              controller: phoneCtrl,
+              decoration: InputDecoration(labelText: 'phone'.tr()),
+              keyboardType: TextInputType.phone,
+              validator: (val) {
+                if (_selectedUserRole == role && (val == null || val.isEmpty)) {
+                  return 'required_for_selected_parent'.tr();
+                }
+                return null;
+              },
+            ),
+            TextFormField(
+              controller: addrCtrl,
+              decoration: InputDecoration(labelText: 'address'.tr()),
+            ),
           ],
         ),
-        TextFormField(
-          controller: nameCtrl,
-          decoration: const InputDecoration(labelText: "Nom complet"),
-        ),
-        TextFormField(
-          controller: phoneCtrl,
-          decoration: const InputDecoration(labelText: "Téléphone"),
-          validator: (val) {
-            if (_selectedUserRole == role && (val == null || val.isEmpty)) {
-              return "Requis pour le parent sélectionné";
-            }
-            return null;
-          },
-        ),
-        TextFormField(
-          controller: addrCtrl,
-          decoration: const InputDecoration(labelText: "Adresse"),
-        ),
-      ],
+      ),
     );
   }
 
-   String generateEmailFromName(String fullName) {
-  final parts = fullName.trim().toLowerCase().split(RegExp(r'\s+'));
-
-  if (parts.length == 1) {
-    return '${parts.first}@edukonekt.com';
-  } else {
-    final firstName = parts.first;
-    final lastName = parts.last;
-    return '$firstName.$lastName@edukonekt.com';
+  String _generateEmailFromName(String fullName) {
+    final parts = fullName.trim().toLowerCase().split(RegExp(r'\s+'));
+    if (parts.length == 1) return '${parts.first}@edukonekt.com';
+    return '${parts.first}.${parts.last}@edukonekt.com';
   }
-}
- String _generatePassword({int length = 8}) {
+
+  String _generatePassword({int length = 8}) {
     const chars = 'AaBbCcDdEeFfGgHhJjKkMmNnPpQqRrSsTtUuVvWwXxYyZz23456789';
     final rng = Random.secure();
     return List.generate(length, (_) => chars[rng.nextInt(chars.length)]).join();
   }
-
 }

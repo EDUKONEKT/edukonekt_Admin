@@ -1,16 +1,17 @@
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TeacherAssignment {
-  String id;
-  String teacherId; // Clé étrangère vers 'teachers'
-  String subjectId; // Clé étrangère vers 'subjects'
-  String classId; // Clé étrangère vers 'classes'
-  String academicYear;
-  String term; // "Trimestre 1", "Semestre 1"
-  // Champs optionnels (si tu as besoin de stocker des infos supplémentaires sur l'assignation) :
-  // String room;      // Salle de classe
-  // DateTime startDate;
-  // DateTime endDate;
+  final String id;
+  final String teacherId;
+  final String subjectId;
+  final String classId;
+  final String academicYear;
+  final String term;
+  final bool isActive;
+  final bool isSynced;
+  final bool visibleToTeacher;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   TeacherAssignment({
     required this.id,
@@ -19,9 +20,11 @@ class TeacherAssignment {
     required this.classId,
     required this.academicYear,
     required this.term,
-    // this.room,
-    // this.startDate,
-    // this.endDate,
+    required this.isActive,
+    required this.isSynced,
+    required this.visibleToTeacher,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory TeacherAssignment.fromFirestore(Map<String, dynamic> data, String id) {
@@ -32,9 +35,11 @@ class TeacherAssignment {
       classId: data['classId'] ?? '',
       academicYear: data['academicYear'] ?? '',
       term: data['term'] ?? '',
-      // room: data['room'],
-      // startDate: (data['startDate'] as Timestamp)?.toDate(),
-      // endDate: (data['endDate'] as Timestamp)?.toDate(),
+      isActive: data['isActive'] ?? true,
+      isSynced: data['isSynced'] ?? false,
+      visibleToTeacher: data['visibleToTeacher'] ?? true,
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
   }
 
@@ -45,9 +50,39 @@ class TeacherAssignment {
       'classId': classId,
       'academicYear': academicYear,
       'term': term,
-      // 'room': room,
-      // 'startDate': startDate,
-      // 'endDate': endDate,
+      'isActive': isActive,
+      'isSynced': isSynced,
+      'visibleToTeacher': visibleToTeacher,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
+  }
+
+  TeacherAssignment copyWith({
+    String? id,
+    String? teacherId,
+    String? subjectId,
+    String? classId,
+    String? academicYear,
+    String? term,
+    bool? isActive,
+    bool? isSynced,
+    bool? visibleToTeacher,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return TeacherAssignment(
+      id: id ?? this.id,
+      teacherId: teacherId ?? this.teacherId,
+      subjectId: subjectId ?? this.subjectId,
+      classId: classId ?? this.classId,
+      academicYear: academicYear ?? this.academicYear,
+      term: term ?? this.term,
+      isActive: isActive ?? this.isActive,
+      isSynced: isSynced ?? this.isSynced,
+      visibleToTeacher: visibleToTeacher ?? this.visibleToTeacher,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }

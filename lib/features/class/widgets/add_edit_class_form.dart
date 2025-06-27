@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/class_model.dart';
@@ -115,7 +116,7 @@ Future<void> _submitForm() async {
 
       // Si on arrive ici, le widget est toujours monté, on peut utiliser le context.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEditing ? 'Classe modifiée avec succès!' : 'Classe ajoutée avec succès!')),
+        SnackBar(content: Text(_isEditing ? 'class_modified_success'.tr() : 'class_added_success'.tr())),
       );
 
       // Et aussi ici, avant de pop.
@@ -128,7 +129,7 @@ Future<void> _submitForm() async {
       if (!mounted) return; // Si le widget n'est plus monté, on arrête ici.
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${classProvider.error ?? e.toString()}')),
+        SnackBar(content: Text('${'Error'.tr()}: ${classProvider.error ?? e.toString()}')),
       );
     }
   }
@@ -153,7 +154,7 @@ Future<void> _submitForm() async {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _isEditing ? 'Modifier la Classe' : 'Ajouter une Nouvelle Classe',
+                _isEditing ? 'edit_class_title'.tr() : 'add_class_button'.tr(),
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
@@ -164,7 +165,7 @@ Future<void> _submitForm() async {
                   labelText: 'Niveau *',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                hint: const Text('Sélectionnez le niveau'),
+                hint:  Text('select_level'.tr()),
                 items: ['6e', '5e', '4e', '3e', '2nde', '1ère', 'Tle']
                     .map((level) => DropdownMenuItem(value: level, child: Text(level)))
                     .toList(),
@@ -173,7 +174,7 @@ Future<void> _submitForm() async {
                     _selectedLevel = value;
                   });
                 },
-                validator: (value) => value == null || value.isEmpty ? 'Veuillez sélectionner un niveau' : null,
+                validator: (value) => value == null || value.isEmpty ? 'please_select_cycle'.tr() : null,
               ),
               const SizedBox(height: 16),
 
@@ -183,7 +184,7 @@ Future<void> _submitForm() async {
                   labelText: 'Section (facultatif)', // Libellé mis à jour
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                hint: const Text('Sélectionnez la section'),
+                hint:  Text('select_section'.tr()),
                 items: ['A', 'B', 'C', '1', '2', '3']
                     .map((section) => DropdownMenuItem(value: section, child: Text(section)))
                     .toList(),
@@ -200,7 +201,7 @@ Future<void> _submitForm() async {
               TextFormField(
                 controller: _complementController,
                 decoration: InputDecoration(
-                  labelText: 'Complément de nom (facultatif)',
+                  labelText: 'class_name_complement_optional'.tr(),
                   hintText: 'Ex: Allemand, Sport, ...',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -214,7 +215,7 @@ Future<void> _submitForm() async {
                   labelText: 'Cycle *',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                hint: const Text('Sélectionnez le cycle'),
+                hint:  Text('select_cycle'.tr()),
                 items: ['premier_cycle', 'second_cycle'] // Les deux cycles possibles
                     .map((cycle) => DropdownMenuItem(value: cycle, child: Text(
                           cycle == 'premier_cycle' ? 'Premier Cycle' : 'Second Cycle'
@@ -225,14 +226,14 @@ Future<void> _submitForm() async {
                     _selectedCycle = value;
                   });
                 },
-                validator: (value) => value == null || value.isEmpty ? 'Veuillez sélectionner un cycle' : null,
+                validator: (value) => value == null || value.isEmpty ? 'please_select_cycle'.tr() : null,
               ),
               const SizedBox(height: 16),
 
               TextFormField(
                 controller: _teacherIdController,
                 decoration: InputDecoration(
-                  labelText: 'ID Professeur Principal (facultatif)',
+                  labelText: 'teacher_id_optional'.tr(),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
@@ -252,9 +253,9 @@ Future<void> _submitForm() async {
                     );
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Padding(
+                    return  Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text('Aucune grille de versement disponible.',
+                      child: Text('no_installment_grid_available'.tr(),
                           style: TextStyle(color: Colors.orange, fontSize: 14)),
                     );
                   }
@@ -296,7 +297,7 @@ Future<void> _submitForm() async {
               ElevatedButton.icon(
                 onPressed: _submitForm,
                 icon: Icon(_isEditing ? Icons.save : Icons.add),
-                label: Text(_isEditing ? 'Enregistrer les modifications' : 'Ajouter la Classe'),
+                label: Text(_isEditing ? 'save_changes_button'.tr() : 'add_class_button'.tr()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,

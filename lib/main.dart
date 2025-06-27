@@ -1,7 +1,14 @@
 //import 'package:edukonekt_admin/core/utils/startup_screen.dart';
 //import 'package:edukonekt_admin/features/dashboard/screen/dashboard_page.dart';
+import 'package:edukonekt_admin/features/absence/provider/absence_provider.dart';
+import 'package:edukonekt_admin/features/course_session/provider/course_session_provider.dart';
+import 'package:edukonekt_admin/features/exercice/provider/exercise_provider.dart';
+import 'package:edukonekt_admin/features/lesson/provider/lesson_provider.dart';
 import 'package:edukonekt_admin/features/parent/provider/parent_provider.dart';
+import 'package:edukonekt_admin/features/schoolsettings/school_setting_provider.dart';
 import 'package:edukonekt_admin/features/student/provider/student_provider.dart';
+import 'package:edukonekt_admin/features/teacher/provider/teacher_provider.dart';
+import 'package:edukonekt_admin/features/teacher_assignment/provider/teacher_assignment_provider.dart';
 import 'package:edukonekt_admin/features/user/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +20,7 @@ import 'features/class/provider/class_provider.dart';
 import 'features/school/provider/school_provider.dart';
 import 'features/schoolfee/provider/ValidatedInstallmentGridsProvider.dart';
 import 'features/schoolfee/provider/installment_grid_provider.dart';
+import 'features/subject/provider/subject_provider.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
@@ -39,6 +47,14 @@ void main() async {
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => ParentProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => TeacherProvider()),
+        ChangeNotifierProvider(create: (_) => SubjectProvider()),
+        ChangeNotifierProvider(create: (_) => LessonProvider()),
+        ChangeNotifierProvider(create: (_) => ExerciseProvider()),
+        ChangeNotifierProvider(create: (_) => CourseSessionProvider()),
+        ChangeNotifierProvider(create: (_) => TeacherAssignmentProvider()),
+        ChangeNotifierProvider(create: (_) => AbsenceProvider()),
+        ChangeNotifierProvider(create: (_) => SchoolSettingProvider())
       ],
       child: EasyLocalization(
         supportedLocales: const [Locale('en'), Locale('fr')],
@@ -55,17 +71,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //final authProvider = Provider.of<AuthProvider>(context);
+    // Récupère une seule fois le ThemeProvider
+    final themeProvider = context.watch<ThemeProvider>();
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'School Admin',
+
+      // 🌍 Localisation
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      theme: ThemeData(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
-      themeMode: Provider.of<ThemeProvider>(context).themeMode,
-      home:  const LoginScreen(),
+
+      // 🎨 Thèmes issus du provider
+      theme: themeProvider.lightTheme,
+      darkTheme: themeProvider.darkTheme,
+      themeMode: themeProvider.themeMode,
+
+      home: const LoginScreen(),
     );
   }
 }

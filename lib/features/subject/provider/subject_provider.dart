@@ -1,109 +1,127 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart';
+
 import '../../../core/models/subject_model.dart';
-import '../service/subject_service.dart'; // Assure-toi que le chemin est correct
+import '../service/subject_service.dart';
 
-class SubjectProvider extends ChangeNotifier {
-  final SubjectService _subjectService = SubjectService();
+final Logger _log = Logger();
 
-  List<Subject> _subjects = [];
-  List<Subject> get subjects => _subjects;
+class SubjectProvider with ChangeNotifier {
+  SubjectProvider();
 
-  Subject? _subject;
-  Subject? get subject => _subject;
+  late final SubjectService _service;
+  late String _schoolId;
+  StreamSubscription? _sub;
 
-  String _errorMessage = '';
-  String get errorMessage => _errorMessage;
+  final List<Subject> _subjects = [];
+  List<Subject> get subjects => List.unmodifiable(_subjects);
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // Récupère toutes les matières
-  Future<void> fetchSubjects() async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
+  bool _isReady = false;
+  bool get isReady => _isReady;
+
+  Object? _error;
+  Object? get error => _error;
+
+  SubjectService get service => _service;
+
+  // ---------- INIT ----------
+  Future<void> init(String schoolId) async {
+    _schoolId = schoolId;
+    _service = SubjectService();
+    await _getOnce();
+    _listenToSubjects();
+  }
+
+  Future<void> _getOnce() async {
     try {
-      _subjects = await _subjectService.getAllSubjects();
-    } catch (e) {
-      _errorMessage = e.toString();
-      _subjects = [];
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final data = await _service.getSubjectsOnce(_schoolId);
+      _subjects
+        ..clear()
+        ..addAll(data);
+
+      _isReady = true;
+    } catch (e, s) {
+      _error = e;
+      _log.e('SubjectProvider init error', error: e, stackTrace: s);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Récupère une matière par ID Firestore
-  Future<void> getSubjectById(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _subject = await _subjectService.getSubjectById(id);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _subject = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Ajoute une nouvelle matière
-  Future<Subject?> addSubject(Subject subject) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      final newSubject = await _subjectService.addSubject(subject);
-      if (newSubject != null) {
-        _subjects.add(newSubject);
+  void _listenToSubjects() {
+    _sub?.cancel();
+    _sub = _service.watchSubjects(_schoolId).listen(
+      (newList) {
+        _subjects
+          ..clear()
+          ..addAll(newList);
+        _error = null;
         notifyListeners();
-      }
-      return newSubject;
-    } catch (e) {
-      _errorMessage = e.toString();
-      return null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Met à jour une matière existante
-  Future<void> updateSubject(Subject subject) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      await _subjectService.updateSubject(subject);
-      final index = _subjects.indexWhere((s) => s.id == subject.id);
-      if (index != -1) {
-        _subjects[index] = subject;
+      },
+      onError: (e, s) {
+        _error = e;
+        _log.e('SubjectProvider stream error', error: e, stackTrace: s);
         notifyListeners();
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      },
+    );
+  }
+
+  // ---------- CRUD ----------
+  Future<void> addSubject(Subject s) async {
+    try {
+      await _service.addSubject(_schoolId, s);
+    } catch (e, s) {
+      _log.e('addSubject error', error: e, stackTrace: s);
+      rethrow;
     }
   }
 
-  // Supprime une matière
+  Future<void> updateSubject(Subject s) async {
+    try {
+      await _service.updateSubject(_schoolId, s);
+    } catch (e, s) {
+      _log.e('updateSubject error', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
   Future<void> deleteSubject(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
     try {
-      await _subjectService.deleteSubject(id);
-      _subjects.removeWhere((s) => s.id == id);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      await _service.deleteSubject(_schoolId, id);
+    } catch (e, s) {
+      _log.e('deleteSubject error', error: e, stackTrace: s);
+      rethrow;
     }
+  }
+
+  Subject? getById(String id) {
+  try {
+    return _subjects.firstWhere((s) => s.id == id);
+  } catch (_) {
+    return null;
+  }
+}
+
+
+  // ---------- FILTERS ----------
+  Subject? getByName(String name) => _service.getByName(_subjects, name);
+  Subject? getByCode(String code) => _service.getByCode(_subjects, code);
+  List<Subject> filterByKeyword(String keyword) => _service.filterByKeyword(_subjects, keyword);
+  List<Subject> get unsyncedSubjects => _subjects.where((s) => !s.isSynced).toList();
+
+  // ---------- CLEANUP ----------
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 }

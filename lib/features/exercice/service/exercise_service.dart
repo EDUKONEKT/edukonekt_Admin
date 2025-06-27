@@ -1,115 +1,105 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../core/models/exercise_model.dart'; // Ensure the path is correct
+import '../../../core/models/exercise_model.dart';
 
 class ExerciseService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final String _collection = 'exercises';
+  final String schoolId;
+  late final CollectionReference _collection;
 
-  // Adds a new exercise to Firestore
-  Future<Exercise?> addExercise(Exercise exercise) async {
-    try {
-      final docRef = await _db.collection(_collection).add(exercise.toFirestore());
-      final docSnapshot = await docRef.get();
-      return docSnapshot.exists ? Exercise.fromFirestore(docSnapshot.data() as Map<String, dynamic>, docSnapshot.id) : null;
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error adding exercise: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error adding exercise: $e');
-    }
+  ExerciseService({required this.schoolId}) {
+    _collection = FirebaseFirestore.instance
+        .collection('schools')
+        .doc(schoolId)
+        .collection('exercises');
   }
 
-  // Retrieves an exercise by its Firestore ID
-  Future<Exercise?> getExerciseById(String id) async {
-    try {
-      final docSnapshot = await _db.collection(_collection).doc(id).get();
-      return docSnapshot.exists ? Exercise.fromFirestore(docSnapshot.data() as Map<String, dynamic>, docSnapshot.id) : null;
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting exercise by ID: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting exercise by ID: $e');
-    }
+  CollectionReference get ref => _collection;
+
+  Future<void> addExercise(Exercise exercise) async {
+    await _collection.doc(exercise.id).set(
+      exercise.toFirestore(),
+      SetOptions(merge: true),
+    );
   }
 
-  // Retrieves all exercises
-  Future<List<Exercise>> getAllExercises() async {
-    try {
-      final querySnapshot = await _db.collection(_collection).get();
-      return querySnapshot.docs.map((doc) => Exercise.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting all exercises: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting all exercises: $e');
-    }
-  }
-
-  // Retrieves exercises for a specific subject
-  Future<List<Exercise>> getExercisesBySubject(String subjectId) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('subjectId', isEqualTo: subjectId)
-          .get();
-      return querySnapshot.docs.map((doc) => Exercise.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting exercises by subject: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting exercises by subject: $e');
-    }
-  }
-
-  // Retrieves exercises for a specific class
-  Future<List<Exercise>> getExercisesByClass(String classId) async {
-    try {
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('classId', isEqualTo: classId)
-          .get();
-      return querySnapshot.docs.map((doc) => Exercise.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting exercises by class: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting exercises by class: $e');
-    }
-  }
-
-  // Retrieves exercises due on a specific date
-  Future<List<Exercise>> getExercisesByDueDate(DateTime dueDate) async {
-    try {
-      final startOfDay = DateTime(dueDate.year, dueDate.month, dueDate.day, 0, 0, 0);
-      final endOfDay = DateTime(dueDate.year, dueDate.month, dueDate.day, 23, 59, 59);
-
-      final querySnapshot = await _db
-          .collection(_collection)
-          .where('dueDate', isGreaterThanOrEqualTo: startOfDay)
-          .where('dueDate', isLessThanOrEqualTo: endOfDay)
-          .get();
-      return querySnapshot.docs.map((doc) => Exercise.fromFirestore(doc.data(), doc.id)).toList();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error getting exercises by due date: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error getting exercises by due date: $e');
-    }
-  }
-
-  // Updates an existing exercise
   Future<void> updateExercise(Exercise exercise) async {
+    await _collection.doc(exercise.id).update(exercise.toFirestore());
+  }
+
+  Future<void> deleteExercise(String id) async {
+    await _collection.doc(id).delete();
+  }
+
+  Future<List<Exercise>> getAll() async {
     try {
-      await _db.collection(_collection).doc(exercise.id).update(exercise.toFirestore());
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error updating exercise: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error updating exercise: $e');
+      final snapshot = await _collection.get();
+      return snapshot.docs
+          .map((doc) => Exercise.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
     }
   }
 
-  // Deletes an exercise by its ID
-  Future<void> deleteExercise(String id) async {
+  Future<Exercise?> getById(String id) async {
     try {
-      await _db.collection(_collection).doc(id).delete();
-    } on FirebaseException catch (e) {
-      throw Exception('Firebase error deleting exercise: ${e.message}');
-    } catch (e) {
-      throw Exception('Unexpected error deleting exercise: $e');
+      final doc = await _collection.doc(id).get();
+      if (!doc.exists) return null;
+      return Exercise.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Stream<List<Exercise>> watch() {
+    return _collection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => Exercise.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList(),
+    );
+  }
+
+  Future<void> sync(List<Exercise> unsynced) async {
+    for (final exercise in unsynced) {
+      await _collection.doc(exercise.id).set(
+        exercise.copyWith(isSynced: true).toFirestore(),
+        SetOptions(merge: true),
+      );
+    }
+  }
+
+  Future<List<Exercise>> getByClass(String classId) async {
+    try {
+      final snapshot = await _collection.where('classId', isEqualTo: classId).get();
+      return snapshot.docs
+          .map((doc) => Exercise.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Exercise>> getBySubject(String subjectId) async {
+    try {
+      final snapshot = await _collection.where('subjectId', isEqualTo: subjectId).get();
+      return snapshot.docs
+          .map((doc) => Exercise.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Exercise>> getByDueDate(DateTime date) async {
+    try {
+      final snapshot = await _collection
+          .where('dueDate', isGreaterThanOrEqualTo: Timestamp.fromDate(date))
+          .where('dueDate', isLessThan: Timestamp.fromDate(date.add(const Duration(days: 1))))
+          .get();
+      return snapshot.docs
+          .map((doc) => Exercise.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (_) {
+      return [];
     }
   }
 }

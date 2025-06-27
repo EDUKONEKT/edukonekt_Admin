@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class ClassHeader extends StatelessWidget {
   final int totalClasses;
-  final int totalStudents; // Questo sarà da implementare in futuro
+  final int totalStudents;
 
   const ClassHeader({
     super.key,
@@ -13,63 +14,71 @@ class ClassHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16.0),
       margin: const EdgeInsets.only(bottom: 16.0),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(15.0),
+        borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.05),
             spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 2), // Ombra leggera
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildStatItem(
             context,
             icon: Icons.school,
-            label: 'Total Classes',
+            label: 'Total Classes'.tr(),
             value: totalClasses.toString(),
-            color: theme.colorScheme.primary,
+            color: colorScheme.primary,
           ),
           _buildStatItem(
             context,
             icon: Icons.groups,
-            label: 'Total Élèves',
-            value: totalStudents.toString(), // Segnaposto
-            color: theme.colorScheme.secondary,
+            label: 'Total Students'.tr(),
+            value: totalStudents.toString(),
+            color: colorScheme.secondary,
           ),
-          // Puoi aggiungere altre statistiche qui
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(BuildContext context, {
+  Widget _buildStatItem(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
     required Color color,
   }) {
+    final theme = Theme.of(context);
     return Column(
       children: [
-        Icon(icon, size: 30, color: color),
+        CircleAvatar(
+          radius: 22,
+          backgroundColor: color.withOpacity(0.15),
+          child: Icon(icon, size: 26, color: color),
+        ),
         const SizedBox(height: 8),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            fontWeight: FontWeight.w500,
           ),
         ),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
             color: color,
           ),

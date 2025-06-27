@@ -74,6 +74,7 @@ class _StartupScreenState extends State<StartupScreen> {
 
     // 5️⃣ Naviguer vers le dashboard
     if (mounted) {
+      await AppInitializer.initializeApp(context, schoolId);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => DashboardPage(schoolId: schoolId!)),
       );

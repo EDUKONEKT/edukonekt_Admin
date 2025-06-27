@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import '../../../core/models/user_model.dart';
 import '../service/user_service.dart';
@@ -115,4 +116,9 @@ class UserProvider extends ChangeNotifier {
     _sub.cancel();
     super.dispose();
   }
+
+  User? getUserLocallyById(String id) {
+  return _users.firstWhereOrNull((u) => u.id == id);
+}
+
 }

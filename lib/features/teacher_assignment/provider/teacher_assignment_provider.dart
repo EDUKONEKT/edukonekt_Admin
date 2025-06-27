@@ -1,159 +1,126 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 import '../../../core/models/teacher_assignment_model.dart';
 import '../service/teacher_assignment_service.dart';
 
-
 class TeacherAssignmentProvider extends ChangeNotifier {
-  final TeacherAssignmentService _teacherAssignmentService = TeacherAssignmentService();
+  late TeacherAssignmentService _service;
+  final Logger _log = Logger();
 
-  List<TeacherAssignment> _teacherAssignments = [];
-  List<TeacherAssignment> get teacherAssignments => _teacherAssignments;
-
-  TeacherAssignment? _teacherAssignment;
-  TeacherAssignment? get teacherAssignment => _teacherAssignment;
-
-  String _errorMessage = '';
-  String get errorMessage => _errorMessage;
-
+  final List<TeacherAssignment> _assignments = [];
   bool _isLoading = false;
+  String? _error;
+  bool _ready = false;
+  StreamSubscription? _sub;
+
+  List<TeacherAssignment> get assignments => List.unmodifiable(_assignments);
   bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get ready => _ready;
 
-  // Récupère toutes les assignations d'enseignants
-  Future<void> fetchTeacherAssignments() async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
+  // ---------- INIT ----------
+  Future<void> init(String schoolId) async {
+    _service = TeacherAssignmentService(schoolId: schoolId);
+    await _getOnce();
+    _listenToAssignments();
+  }
+
+  Future<void> _getOnce() async {
     try {
-      _teacherAssignments = await _teacherAssignmentService.getAllTeacherAssignments();
-    } catch (e) {
-      _errorMessage = e.toString();
-      _teacherAssignments = [];
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final data = await _service.getAll();
+      _assignments
+        ..clear()
+        ..addAll(data);
+
+      _ready = true;
+    } catch (e, stack) {
+      _error = e.toString();
+      _log.e('TeacherAssignmentProvider init error', error: e, stackTrace: stack);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Récupère une assignation d'enseignant par ID Firestore
-  Future<void> getTeacherAssignmentById(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _teacherAssignment = await _teacherAssignmentService.getTeacherAssignmentById(id);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _teacherAssignment = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+  void _listenToAssignments() {
+    _sub?.cancel();
+    _sub = _service.ref.snapshots().listen(
+      (snapshot) {
+        _assignments
+          ..clear()
+          ..addAll(snapshot.docs.map((doc) => TeacherAssignment.fromFirestore(
+              doc.data() as Map<String, dynamic>, doc.id)));
 
-  // Récupère les assignations d'enseignant pour un enseignant spécifique
-  Future<void> fetchTeacherAssignmentsByTeacher(String teacherId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _teacherAssignments = await _teacherAssignmentService.getTeacherAssignmentsByTeacher(teacherId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _teacherAssignments = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Récupère les assignations d'enseignant pour une matière spécifique
-  Future<void> fetchTeacherAssignmentsBySubject(String subjectId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _teacherAssignments = await _teacherAssignmentService.getTeacherAssignmentsBySubject(subjectId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _teacherAssignments = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Récupère les assignations d'enseignant pour une classe spécifique
-  Future<void> fetchTeacherAssignmentsByClass(String classId) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      _teacherAssignments = await _teacherAssignmentService.getTeacherAssignmentsByClass(classId);
-    } catch (e) {
-      _errorMessage = e.toString();
-      _teacherAssignments = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Ajoute une nouvelle assignation d'enseignant
-  Future<TeacherAssignment?> addTeacherAssignment(TeacherAssignment assignment) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      final newAssignment = await _teacherAssignmentService.addTeacherAssignment(assignment);
-      if (newAssignment != null) {
-        _teacherAssignments.add(newAssignment);
+        _error = null;
         notifyListeners();
-      }
-      return newAssignment;
-    } catch (e) {
-      _errorMessage = e.toString();
-      return null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Met à jour une assignation d'enseignant existante
-  Future<void> updateTeacherAssignment(TeacherAssignment assignment) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      await _teacherAssignmentService.updateTeacherAssignment(assignment);
-      final index = _teacherAssignments.indexWhere((a) => a.id == assignment.id);
-      if (index != -1) {
-        _teacherAssignments[index] = assignment;
+      },
+      onError: (e, stack) {
+        _error = e.toString();
+        _log.e('TeacherAssignmentProvider stream error', error: e, stackTrace: stack);
         notifyListeners();
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      },
+    );
+  }
+
+  // ---------- CRUD ----------
+  Future<void> addAssignment(TeacherAssignment assignment) async {
+    try {
+      await _service.addAssignment(assignment);
+    } catch (e, stack) {
+      _log.e('Erreur addAssignment', error: e, stackTrace: stack);
     }
   }
 
-  // Supprime une assignation d'enseignant
-  Future<void> deleteTeacherAssignment(String id) async {
-    _isLoading = true;
-    _errorMessage = '';
-    notifyListeners();
+  Future<void> updateAssignment(TeacherAssignment assignment) async {
     try {
-      await _teacherAssignmentService.deleteTeacherAssignment(id);
-      _teacherAssignments.removeWhere((a) => a.id == id);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      await _service.updateAssignment(assignment);
+    } catch (e, stack) {
+      _log.e('Erreur updateAssignment', error: e, stackTrace: stack);
     }
+  }
+
+  Future<void> deleteAssignment(String id) async {
+    try {
+      await _service.deleteAssignment(id);
+    } catch (e, stack) {
+      _log.e('Erreur deleteAssignment', error: e, stackTrace: stack);
+    }
+  }
+
+  Future<void> syncPendingAssignments() async {
+    final unsynced = _assignments.where((a) => !a.isSynced).toList();
+    if (unsynced.isNotEmpty) {
+      await _service.sync(unsynced);
+    }
+  }
+
+  // ---------- FILTERS ----------
+  List<TeacherAssignment> getByTeacher(String teacherId) {
+    return _assignments.where((a) => a.teacherId == teacherId).toList();
+  }
+
+  List<TeacherAssignment> getByClass(String classId) {
+    return _assignments.where((a) => a.classId == classId).toList();
+  }
+
+  List<TeacherAssignment> getByAcademicYear(String year) {
+    return _assignments.where((a) => a.academicYear == year).toList();
+  }
+
+  List<TeacherAssignment> getByTerm(String term) {
+    return _assignments.where((a) => a.term == term).toList();
+  }
+
+  // ---------- CLEANUP ----------
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 }

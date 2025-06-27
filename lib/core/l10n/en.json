@@ -26,7 +26,8 @@
       "calendar": "Calendar",
       "messages": "Messages",
       "settings": "Settings",
-      "stats_placeholder": "Statistics coming soon..."
+      "stats_placeholder": "Statistics coming soon...",
+      "subjects": "Subjects"
     },
   
   
@@ -56,19 +57,19 @@
     },
     
     
-  "levels": {
+ 
     "6e": "Form 1",
     "5e": "Form 2",
     "4e": "Form 3",
     "3e": "Form 4",
     "2nde": "Form 5",
     "1ère": "Lower Sixth",
-    "Tle": "Upper Sixth"
-  },
-  "cycles": {
+    "Tle": "Upper Sixth",
+  
+ 
     "premier_cycle": "First Cycle",
-    "second_cycle": "Second Cycle"
-  },
+    "second_cycle": "Second Cycle",
+  
   "sections": {
     "A": "A",
     "B": "B",
@@ -77,7 +78,7 @@
     "2": "2",
     "3": "3"
   },
-  "class":{
+  
     "class_name_complement_optional": "Complementary Name (optional)",
   "class_name_complement_hint": "Ex: German, Sports, ...",
   "teacher_id_optional": "Head Teacher ID (optional)",
@@ -99,6 +100,78 @@
   "please_select_installment_grid": "Please select an installment grid",
   "students_count": "{count} students",
   "add_class": "Add class",
-  "grid_name_and_amount": "{name} ({amount} FCFA)"
-  }
+  "grid_name_and_amount": "{name} ({amount} FCFA)",
+  "Confirm deletion": "Confirm deletion",
+  "Do you really want to delete the class": "Do you really want to delete the class",
+  "Cancel": "Cancel",
+  "Delete": "Delete",
+  "Total Classes": "Total Classes",
+  "Total Students": "Total Students",
+  "edit": "Edit",
+  "Search for a class": "Search for a class",
+  "ex:form 1 A":"ex:form 1 A",
+  "By Cycle": "By Cycle",
+  "All":"All",
+  "By Level": "By Level",
+  
+
+  
+  "students": "Students",
+  "search": "Search",
+  "add_student": "Add student",
+  "total": "Total",
+  "girls": "Girls",
+  "boys": "Boys",
+   "filter_cycle": "Cycle",
+  "filter_all": "All",
+  "filter_cycle1": "1st cycle",
+  "filter_cycle2": "2nd cycle",
+  "filter_class": "Class",
+  "Filters": "Filters",
+
+  "student_info": "Student Information",
+  "full_name": "Full Name",
+  "gender_boy": "Boy",
+  "gender_girl": "Girl",
+  "birth_date": "Birth Date",
+  "specificities": "Specificities",
+  "parents_tutors": "Parents / Tutors",
+  "father": "Father",
+  "mother": "Mother",
+  "tutor": "Tutor",
+  "phone": "Phone",
+  "address": "Address",
+  "account": "Account",
+  "required": "Required",
+  "required_for_selected_parent": "Required for selected parent",
+  "submit": "Save",
+  "parent_account_created": "Parent account created",
+  "parent_account_email": "Email",
+  "parent_account_password": "Password",
+  "ok": "OK",
+  "error": "Error",
+  "Student joined to an existing parent": "Student joined to an existing parent",
+  "New Student":"New Student",
+  "dd/MM/yyyy" : "dd/MM/yyyy",
+
+
+"subjects":{
+  "subject": "Subject",
+  "subjects": "Subjects",
+  "subject_detail": "Subject Details",
+  "code": "Code",
+  "description": "Description",
+  "add_subject": "Add Subject",
+  "edit_subject": "Edit Subject",
+  "delete_subject": "Delete Subject",
+  "confirm_delete_subject": "Do you really want to delete this subject?",
+  "name": "Name",
+  "save": "Save",
+  "cancel": "Cancel",
+  "other": "Other",
+  "select_subject_name": "Select a subject name",
+  "last_updated": "Last updated"
+}
+
+
 }

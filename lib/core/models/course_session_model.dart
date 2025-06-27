@@ -2,17 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class CourseSession {
-  String id;
-  String classId;   // Clé étrangère vers Class
-  String teacherId; // Clé étrangère vers Teacher
-  String subjectId; // Clé étrangère vers Subject
-  int dayOfWeek;    // 1: Lundi, 2: Mardi, ..., 7: Dimanche
-  TimeOfDay startTime;
-  TimeOfDay endTime;
-  String academicYear; // "2023-2024"   // Date de fin de la récurrence
-
-  DateTime createdAt;
-  DateTime updatedAt;
+  final String id;
+  final String classId;
+  final String teacherId;
+  final String subjectId;
+  final int dayOfWeek;
+  final TimeOfDay startTime;
+  final TimeOfDay endTime;
+  final String academicYear;
+  final bool isSynced;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   CourseSession({
     required this.id,
@@ -23,6 +23,7 @@ class CourseSession {
     required this.startTime,
     required this.endTime,
     required this.academicYear,
+    required this.isSynced,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -34,9 +35,10 @@ class CourseSession {
       teacherId: data['teacherId'] ?? '',
       subjectId: data['subjectId'] ?? '',
       dayOfWeek: data['dayOfWeek'] ?? 1,
-      startTime: _timeOfDayFromTimestamp(data['startTime']),
-      endTime: _timeOfDayFromTimestamp(data['endTime']),
+      startTime: _fromTimestamp(data['startTime']),
+      endTime: _fromTimestamp(data['endTime']),
       academicYear: data['academicYear'] ?? '',
+      isSynced: data['isSynced'] ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
@@ -48,27 +50,50 @@ class CourseSession {
       'teacherId': teacherId,
       'subjectId': subjectId,
       'dayOfWeek': dayOfWeek,
-      'startTime': _timeOfDayToTimestamp(startTime),
-      'endTime': endTime,
+      'startTime': _toTimestamp(startTime),
+      'endTime': _toTimestamp(endTime),
       'academicYear': academicYear,
+      'isSynced': isSynced,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
   }
 
-  // Helper functions to handle TimeOfDay with Firestore (comme avant)
-  static TimeOfDay _timeOfDayFromTimestamp(dynamic timestamp) {
-    if (timestamp is Timestamp) {
-      DateTime dateTime = timestamp.toDate();
-      return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
-    } else {
-      return const TimeOfDay(hour: 0, minute: 0);
-    }
+  CourseSession copyWith({
+    String? id,
+    String? classId,
+    String? teacherId,
+    String? subjectId,
+    int? dayOfWeek,
+    TimeOfDay? startTime,
+    TimeOfDay? endTime,
+    String? academicYear,
+    bool? isSynced,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return CourseSession(
+      id: id ?? this.id,
+      classId: classId ?? this.classId,
+      teacherId: teacherId ?? this.teacherId,
+      subjectId: subjectId ?? this.subjectId,
+      dayOfWeek: dayOfWeek ?? this.dayOfWeek,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      academicYear: academicYear ?? this.academicYear,
+      isSynced: isSynced ?? this.isSynced,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 
-  static Timestamp _timeOfDayToTimestamp(TimeOfDay timeOfDay) {
+  static TimeOfDay _fromTimestamp(Timestamp? ts) {
+    final dt = ts?.toDate() ?? DateTime.now();
+    return TimeOfDay(hour: dt.hour, minute: dt.minute);
+  }
+
+  static Timestamp _toTimestamp(TimeOfDay t) {
     final now = DateTime.now();
-    final dateTime = DateTime(now.year, now.month, now.day, timeOfDay.hour, timeOfDay.minute);
-    return Timestamp.fromDate(dateTime);
+    return Timestamp.fromDate(DateTime(now.year, now.month, now.day, t.hour, t.minute));
   }
 }

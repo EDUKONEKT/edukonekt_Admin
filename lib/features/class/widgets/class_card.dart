@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/models/class_model.dart';
@@ -16,12 +17,15 @@ class ClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = 150.0;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    const double size = 150.0;
 
     return SizedBox(
       width: size,
       height: size,
       child: Card(
+        color: theme.cardColor,
         elevation: 4,
         shape: const CircleBorder(),
         child: InkWell(
@@ -33,41 +37,35 @@ class ClassCard extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Lettre initiale dans un petit cercle
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    ),
-                    child: Center(
-                      child: Text(
-                        classe.name[0].toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                  // Initiale de la classe
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: colorScheme.primary.withOpacity(0.15),
+                    child: Text(
+                      classe.name[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     classe.name,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
                   Text(
-                    '${classe.studentCount} élèves',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        ),
+                    '${classe.studentCount} ${'students'.tr()}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.6),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
@@ -75,14 +73,14 @@ class ClassCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.edit, size: 18, color: Theme.of(context).colorScheme.primary),
+                        icon: Icon(Icons.edit, size: 18, color: colorScheme.primary),
                         onPressed: onEdit,
-                        tooltip: 'Modifier',
+                        tooltip: 'edit'.tr(),
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete, size: 18, color: Theme.of(context).colorScheme.error),
+                        icon: Icon(Icons.delete, size: 18, color: theme.colorScheme.error),
                         onPressed: onDelete,
-                        tooltip: 'Supprimer',
+                        tooltip: 'Delete'.tr(),
                       ),
                     ],
                   ),
@@ -96,7 +94,6 @@ class ClassCard extends StatelessWidget {
   }
 }
 
-
 class ClassAddCard extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -104,12 +101,15 @@ class ClassAddCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = 150.0;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    const double size = 150.0;
 
     return SizedBox(
       width: size,
       height: size,
       child: Card(
+        color: theme.cardColor,
         shape: const CircleBorder(),
         elevation: 4,
         child: InkWell(
@@ -122,15 +122,15 @@ class ClassAddCard extends StatelessWidget {
                 Icon(
                   Icons.add_circle_outline,
                   size: 40,
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: colorScheme.secondary,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Ajouter',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
+                  'Ajouter'.tr(),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.secondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
